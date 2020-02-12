@@ -10,15 +10,16 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
-//inicia la funcion de la moda de un arreglo
+//inicia la funcion que saca la moda de un arreglo
 void moda(){
 } 
-//funcion para sacar el numero mas grande de un arreglo
+//funcion para hacer un intercambio en el arreglo
 void cambiar(int *xp, int *yp){
 	int temp=*xp;
 	*xp=*yp;
 	*yp=temp;
 }
+//funcion para sacar el numero mas grande de un arreglo
 int mayorNumero(int array[]){
 	int i,j;
 	for(i=0;i<10-1;i++){
