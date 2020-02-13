@@ -1,4 +1,4 @@
-//Programa hecho por Josue Yafte Ramírez Viramontes y Pablo Pérez Durán
+//Programa hecho por Josue Yafte Ramírez Viramontes y Juan Pablo Pérez Dublán
 //Programa que crea dos procesos hijos a partir del padre 
 //el padre  crea un vector de 10 enteros de valores entre 0-255
 //hijo 1 busca la moda del vector y la envia al proceso padre
