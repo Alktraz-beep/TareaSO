@@ -3,6 +3,7 @@ Programa que realiza el shell de linux, ejecutando los comandos con execvp
 por medio de vector si no tiene pipe, si tiene pipe se hacen dos vectores y se crea hijo nieto
 para salir del ejecutar se utiliza el comando "sal" tantas veces como sea posible
 Programa realizado por @Josue Yafte Ramírez Viramontes y @Juan Pablo Pérez Dublán
+realizado el 21/02/2020
 */
 #include<stdio.h>
 #include<stdlib.h>
@@ -32,7 +33,7 @@ int main(){
 	
 	//********************crea un apuntador a char dinamico ***/
 
-	char *comando,*salida="sal"; //en comando se guarda el comando y en salida la palabra para salir
+	char *comando,*salida="salir"; //en comando se guarda el comando y en salida la palabra para salir
 	comando=(char*)malloc(MAX*sizeof(char)+1);
 
 	int sal=0;//esta variable verifica si aun no ha salido es 0 y si ya puso "sal' es 1
@@ -248,3 +249,14 @@ char* separarCadena(char *comando){
 	//printf("comando2:%s\n",comando2);
 	return comando2;
 }
+//****************conclusiones*******************
+/*Josue Yafte Ramírez Viramontes:
+	En este programa realizado pude darme cuenta de como es que el shell de linux hace para ejecutar los comandos que
+	normalmente utilizamos en la terminal para programar y tambien para hacer tareas basicas,
+	aunque esta forma fue por medio de fork() y de las pipes que vimos en clase fue muy interesante y bastante
+	arduo hacer el programa ya que fueron bastantes lineas de comandos y funciones tan solo
+	para que pueda hacer lo que el Shell de modo que interprete las llamadas al sistema, son aspectos interesantes
+	en la materia donde aprendi como es la importancia de el sistema operativo y de su interprete de comandos
+*/
+/*Juan Pablo Pérez Dublán
+*/
