@@ -1,6 +1,7 @@
 /*
 Programa que realiza el shell de linux, ejecutando los comandos con execvp 
-por medio de vector
+por medio de vector si no tiene pipe, si tiene pipe se hacen dos vectores y se crea hijo nieto
+para salir del ejecutar se utiliza el comando "sal" tantas veces como sea posible
 Programa realizado por @Josue Yafte Ramírez Viramontes y @Juan Pablo Pérez Dublán
 */
 #include<stdio.h>
@@ -18,7 +19,8 @@ void inicializarVec(char *arreglo[],int tam);
 void vaciarVector(char *arreglo[]);//tal vez nunca se utilice
 int vectorSize(char* cadena);
 int hayPipe(char *cadena);
-void separarCadena(char *vec1[], char *vec2[],char *comando);
+void quitarEspacios(char *cadena);
+char* separarCadena(char *comando);
 
 int main(){
 
@@ -49,27 +51,60 @@ int main(){
 		if(pid){
 			wait(&estado);
 			sal=estado>>8;
-			printf("salida= %d\n",sal);
+			//printf("salida= %d\n",sal);
 		}else{
 			//--------aqui se verifica si el comando tiene pipe
 			//--------si lo tiene separa en dos vectores sin el pipe
-			if(hayPipe(comando)){
+			if(hayPipe(comando)==1){
+				int pidNieto,pipefd[2];
+			//*******************ESTA PARTE DEL CODIGO CREA DOS VECTORES CON LOS DOS CODIGOS**********
+				//printf("tiene pipe\n");
+				char *comando2=(char*)malloc(MAX*sizeof(char)+1);
 				//se crean dos cadenas para separar en dos vectores
-				char *array1[10]; // vector primero donde se guarda el comando por indices	
-				char *array2[10]; // vector primero donde se guarda el comando por indices	
-				printf("tiene pipe\n");
-				separarCadena(array1,array2,comando);
+				strcpy(comando2,separarCadena(comando));
+				int tamVec1=vectorSize(comando)+1;
+				int tamVec2=vectorSize(comando2)+1;
+				//printf("tamV1:%d\n",tamVec1);
+				//printf("tamV2:%d\n",tamVec2);
+				char *array1[tamVec1]; // <--------vector primero donde se guarda el comando por indices	
+				inicializarVec(array1,tamVec1);// se inicializa el vector para que no quede basura al siguiente comando
+				char *array2[tamVec2]; // <--------vector segundo donde se guarda el comando por indices	
+				inicializarVec(array2,tamVec2);// se inicializa el vector para que no quede basura al siguiente comando
+				separarEnVector(comando,array1);
+				//mostrarVector(array1,tamVec1);
+				separarEnVector(comando2,array2);
+				//mostrarVector(array2,tamVec2);
+			//***************************************************************************************
+				pipe(pipefd);
+				pidNieto=fork();
+				if(pidNieto){
+					close(0);
+					close(pipefd[1]);
+					dup(pipefd[0]);
+					execvp(array2[0],array2);
+				}else{
+					close(1);
+					close(pipefd[0]);
+					dup(pipefd[1]);
+					int error=execvp(array1[0],array1);
+					printf("fallo :( %d",error);
+				}
 				exit(0);
-			}else{
+			}else if(hayPipe(comando)==0){
+				quitarEspacios(comando);
+				//printf("com:%s",comando);
 				int tamVec=vectorSize(comando)+1;//se le suma 1 para el null del final
 				char *array[tamVec]; // vector primero donde se guarda el comando por indices	
 				inicializarVec(array,tamVec);// se inicializa el vector para que no quede basura al siguiente comando
 				separarEnVector(comando,array); //llama a funcion para separar el comando por espacio
+				//mostrarVector(array,tamVec);
 
 				if(strcmp(array[0],salida)==0){
 					exit((int)1);
 				}
 				execvp(array[0],array);
+			}else{
+				printf("Solo se permite un pipe\n");
 			}
 			
 			//mostrarVector(array,tamVec);
@@ -109,10 +144,9 @@ int vectorSize(char* cadena){
 Funcion que permite separar el comando que se le da "cadena" en un vector array de cadenas
 */
 void separarEnVector(char* cadena,char *array[]){
-	char *aux;//=(char*)0;  //cadena auxiliar donde se guardara la palabra para guardar en el vector
+	char *aux;//cadena auxiliar donde se guardara la palabra para guardar en el vector
 	int cont=0,cont2=0;  //contador para el indice del vector
-	//free(aux);
-	aux=(char*)malloc(1000*sizeof(char));  //*****mem dinamica del auxiliar
+	aux=(char*)malloc(MAX*sizeof(char));  //*****mem dinamica del auxiliar
 
 	//----------aqui se separa el comando por palabras en el vector--------
 	while(cadena[cont]!=0){
@@ -161,15 +195,35 @@ int hayPipe(char *cadena){
 	int haypipe=0,i=0;//si no tiene pipe es 0 y si tiene es 1, i es un contador
 	while(cadena[i]!=0){
 		if(cadena[i]=='|')
-			haypipe=1;
+			haypipe++;
 		i++;
 	}
 	return haypipe;
 }
 /*
+Funcion que quita los primeros espacios de la funcion
+*/
+void quitarEspacios(char *cadena){
+	int i=0;
+	char *aux2;
+	aux2=(char*)malloc(MAX*sizeof(char));  //*****mem dinamica del auxiliar
+	if(isspace(cadena[0])==0){
+	}else{
+		while(isspace(cadena[i])!=0){
+			i++;
+		}
+		//printf("espacios:%d\n",i);
+		for(int j=i;cadena[j]!='\0';j++){
+			strncat(aux2,&cadena[j],1);
+		}
+		//printf("comando:%s\n",cadena);
+		strcpy(cadena,aux2);
+	}
+}
+/*
 Funcion que separa una cadena en dos 
 */
-void separarCadena(char *vec1[], char *vec2[],char *comando){
+char* separarCadena(char *comando){
 	int i=0;
 	//se hacen dos cadenas para despues separar en dos vectores cada cadena
 	char* comando1;	
@@ -190,4 +244,7 @@ void separarCadena(char *vec1[], char *vec2[],char *comando){
 	}
 	//printf("cadena1: %s\n",comando1);
 	//printf("cadena2: %s\n",comando2);
+	strcpy(comando,comando1);
+	//printf("comando2:%s\n",comando2);
+	return comando2;
 }
