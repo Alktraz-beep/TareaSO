@@ -36,9 +36,9 @@ int main(){
 	char *comando,*salida="salir"; //en comando se guarda el comando y en salida la palabra para salir
 	comando=(char*)malloc(MAX*sizeof(char)+1);
 
-	int sal=0;//esta variable verifica si aun no ha salido es 0 y si ya puso "sal' es 1
+	int sal=9;//esta variable verifica si aun no ha salido es 0 y si ya puso "sal' es 1
 	//aqui se lee la cadena que ingresara como comando mientras no sea
-	//la palabra "sal",despues imprime la palabra ingresada
+	//la palabra "salir",despues imprime la palabra ingresada
 
 	do{
 		printf(PROMPT);
@@ -90,7 +90,7 @@ int main(){
 					int error=execvp(array1[0],array1);
 					printf("fallo :( %d",error);
 				}
-				exit(0);
+				exit(8);
 			}else if(hayPipe(comando)==0){
 				quitarEspacios(comando);
 				//printf("com:%s",comando);
@@ -101,7 +101,7 @@ int main(){
 				//mostrarVector(array,tamVec);
 
 				if(strcmp(array[0],salida)==0){
-					exit((int)1);
+					exit((int)8);
 				}
 				execvp(array[0],array);
 			}else{
@@ -111,7 +111,7 @@ int main(){
 			//mostrarVector(array,tamVec);
 		}
 		
-	}while(sal==0);
+	}while(sal!=8);
 	
 	return 0;
 }
