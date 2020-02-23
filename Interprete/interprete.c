@@ -14,10 +14,9 @@ realizado el 21/02/2020
 #define PROMPT "<@#>"
 #define MAX 1000
 
-void separarEnVector(char* cadena, char *array[]);
+void separarEnVector(char* cadena, char *array[],char *delimitador);
 void mostrarVector(char *arreglo[],int tam);
 void inicializarVec(char *arreglo[],int tam);
-void vaciarVector(char *arreglo[]);//tal vez nunca se utilice
 int vectorSize(char* cadena);
 int hayPipe(char *cadena);
 void quitarEspacios(char *cadena);
@@ -36,7 +35,7 @@ int main(){
 	char *comando,*salida="salir"; //en comando se guarda el comando y en salida la palabra para salir
 	comando=(char*)malloc(MAX*sizeof(char)+1);
 
-	int sal=9;//esta variable verifica si aun no ha salido es 0 y si ya puso "sal' es 1
+	int sal=0;//esta variable verifica si aun no ha salido es 0 y si ya puso "salir' es 2
 	//aqui se lee la cadena que ingresara como comando mientras no sea
 	//la palabra "salir",despues imprime la palabra ingresada
 
@@ -52,29 +51,23 @@ int main(){
 		if(pid){
 			wait(&estado);
 			sal=estado>>8;
-			//printf("salida= %d\n",sal);
 		}else{
 			//--------aqui se verifica si el comando tiene pipe
 			//--------si lo tiene separa en dos vectores sin el pipe
 			if(hayPipe(comando)==1){
 				int pidNieto,pipefd[2];
 			//*******************ESTA PARTE DEL CODIGO CREA DOS VECTORES CON LOS DOS CODIGOS**********
-				//printf("tiene pipe\n");
 				char *comando2=(char*)malloc(MAX*sizeof(char)+1);
 				//se crean dos cadenas para separar en dos vectores
 				strcpy(comando2,separarCadena(comando));
 				int tamVec1=vectorSize(comando)+1;
 				int tamVec2=vectorSize(comando2)+1;
-				//printf("tamV1:%d\n",tamVec1);
-				//printf("tamV2:%d\n",tamVec2);
 				char *array1[tamVec1]; // <--------vector primero donde se guarda el comando por indices	
 				inicializarVec(array1,tamVec1);// se inicializa el vector para que no quede basura al siguiente comando
 				char *array2[tamVec2]; // <--------vector segundo donde se guarda el comando por indices	
 				inicializarVec(array2,tamVec2);// se inicializa el vector para que no quede basura al siguiente comando
-				separarEnVector(comando,array1);
-				//mostrarVector(array1,tamVec1);
-				separarEnVector(comando2,array2);
-				//mostrarVector(array2,tamVec2);
+				separarEnVector(comando,array1," ");
+				separarEnVector(comando2,array2," ");
 			//***************************************************************************************
 				pipe(pipefd);
 				pidNieto=fork();
@@ -82,36 +75,45 @@ int main(){
 					close(0);
 					close(pipefd[1]);
 					dup(pipefd[0]);
-					execvp(array2[0],array2);
+					if(execvp(array2[0],array2)==-1){
+						printf("Comando invalido!\n");//lanza -1 si el argumeno no se reconoce
+						fflush(stdout);
+						exit(0);
+					}
 				}else{
 					close(1);
 					close(pipefd[0]);
 					dup(pipefd[1]);
-					int error=execvp(array1[0],array1);
-					printf("fallo :( %d",error);
+					if(execvp(array1[0],array1)==-1){ //lanza -1 si el argumento no se reconoce
+						printf("Comando invalido!\n");//mensaje que lanza
+						fflush(stdout);
+						exit(0);
+					}
 				}
 				exit(8);
 			}else if(hayPipe(comando)==0){
 				quitarEspacios(comando);
-				//printf("com:%s",comando);
 				int tamVec=vectorSize(comando)+1;//se le suma 1 para el null del final
 				char *array[tamVec]; // vector primero donde se guarda el comando por indices	
 				inicializarVec(array,tamVec);// se inicializa el vector para que no quede basura al siguiente comando
-				separarEnVector(comando,array); //llama a funcion para separar el comando por espacio
-				//mostrarVector(array,tamVec);
+				separarEnVector(comando,array," "); //llama a funcion para separar el comando por espacio
 
 				if(strcmp(array[0],salida)==0){
-					exit((int)8);
+					exit(2);
 				}
-				execvp(array[0],array);
+				if(execvp(array[0],array)==-1){//lanza -1 si no se reconoce
+					printf("comando invalido\n");
+					fflush(stdout);
+					exit(0);
+				}
+
 			}else{
 				printf("Solo se permite un pipe\n");
 			}
 			
-			//mostrarVector(array,tamVec);
 		}
 		
-	}while(sal!=8);
+	}while(sal!=2);
 	
 	return 0;
 }
@@ -144,26 +146,16 @@ int vectorSize(char* cadena){
 /*
 Funcion que permite separar el comando que se le da "cadena" en un vector array de cadenas
 */
-void separarEnVector(char* cadena,char *array[]){
-	char *aux;//cadena auxiliar donde se guardara la palabra para guardar en el vector
-	int cont=0,cont2=0;  //contador para el indice del vector
-	aux=(char*)malloc(MAX*sizeof(char));  //*****mem dinamica del auxiliar
 
-	//----------aqui se separa el comando por palabras en el vector--------
-	while(cadena[cont]!=0){
-
-		if(isspace(cadena[cont])==0 && cadena[cont]!='\0'){
-			strncat(aux,&cadena[cont],1);
-		}else{
-			array[cont2]=strdup(aux);
-			cont2++;
-			strcpy(aux,"");
-		}
+void separarEnVector(char* cadena,char *array[],char *delimitador){
+	char *token=strtok(cadena,delimitador);
+	int cont=0;
+	while(token!=NULL){
+		array[cont]=strdup(token);
+		token=strtok(NULL,delimitador);
 		cont++;
 	}
-	array[cont2]=strdup(aux);
 }
-
 /*
 Funcion que permite mostrar un vectorde cadenas usado para comprobar si si se estan metiendo
 los datos correctos 
@@ -173,20 +165,13 @@ void mostrarVector(char *arreglo[],int tam){
 		printf("pos %d cad: %s\n",i,arreglo[i]);
 	}
 }
+
 /*
 funcion que inicializa el vector con null para vaciar la cadena
 */
 void inicializarVec(char *arreglo[],int tam){
 	for(int i=0;i<tam;i++){
 		arreglo[i]=(char*)0;
-	}
-}
-/*
-funcion que permite vaciar el vector de cadenas
-*/
-void vaciarVector(char *arreglo[MAX]){
-	for(int i=0;i<MAX;i++){
-		free(arreglo[i]);
 	}
 }
 /*
@@ -213,11 +198,9 @@ void quitarEspacios(char *cadena){
 		while(isspace(cadena[i])!=0){
 			i++;
 		}
-		//printf("espacios:%d\n",i);
 		for(int j=i;cadena[j]!='\0';j++){
 			strncat(aux2,&cadena[j],1);
 		}
-		//printf("comando:%s\n",cadena);
 		strcpy(cadena,aux2);
 	}
 }
@@ -243,12 +226,13 @@ char* separarCadena(char *comando){
 		i++;
 		strncat(comando2,&comando[i],1);
 	}
-	//printf("cadena1: %s\n",comando1);
-	//printf("cadena2: %s\n",comando2);
 	strcpy(comando,comando1);
-	//printf("comando2:%s\n",comando2);
 	return comando2;
 }
+/*
+funcion que quita espacios del vector
+*/
+
 //****************conclusiones*******************
 /*Josue Yafte Ramírez Viramontes:
 	En este programa realizado pude darme cuenta de como es que el shell de linux hace para ejecutar los comandos que
