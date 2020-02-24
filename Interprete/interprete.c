@@ -2,7 +2,7 @@
 Programa que realiza el shell de linux, ejecutando los comandos con execvp 
 por medio de vector si no tiene pipe, si tiene pipe se hacen dos vectores y se crea hijo nieto
 para salir del ejecutar se utiliza el comando "sal" tantas veces como sea posible
-Programa realizado por @Josue Yafte RamÃ­rez Viramontes y @Juan Pablo PÃ©rez DublÃ¡n
+Programa realizado por @Josue Yafte Ramírez Viramontes y @Juan Pablo Pérez Dublán
 realizado el 21/02/2020
 */
 #include<stdio.h>
@@ -11,7 +11,7 @@ realizado el 21/02/2020
 #include<ctype.h>
 #include<unistd.h>
 #include<sys/wait.h>
-#define PROMPT "<@#>"
+#define PROMPT "<Josue@Pablo#>"
 #define MAX 1000
 
 void separarEnVector(char* cadena, char *array[],char *delimitador);
@@ -29,7 +29,7 @@ int main(){
 	*/
 	int pid,estado;
 	
-	
+
 	//********************crea un apuntador a char dinamico ***/
 
 	char *comando,*salida="salir"; //en comando se guarda el comando y en salida la palabra para salir
@@ -46,7 +46,7 @@ int main(){
 		//printf("cadena orig: %s\n tamano:%ld \n",comando,strlen(comando));
 		pid=fork();
 		//Aqui se empieza el hijo que es el que ejecuta el codigo
-		//printf("tamaÃ±o del vector: %d\n",tamVec);
+		//printf("tamaño del vector: %d\n",tamVec);
 
 		if(pid){
 			wait(&estado);
@@ -69,7 +69,7 @@ int main(){
 				separarEnVector(comando,array1," ");
 				separarEnVector(comando2,array2," ");
 			//***************************************************************************************
-				pipe(pipefd);
+				pipe(pipefd);//nos ayuda a generar comunicacion entre las padre e hijo
 				pidNieto=fork();
 				if(pidNieto){
 					close(0);
@@ -121,7 +121,7 @@ int main(){
 
 
 /*
-Funcion que permite sacar el tamaÃ±o que deberia tener el array de palabras del comando
+Funcion que permite sacar el tamaño que deberia tener el array de palabras del comando
 */
 
 int vectorSize(char* cadena){
@@ -234,7 +234,7 @@ funcion que quita espacios del vector
 */
 
 //****************conclusiones*******************
-/*Josue Yafte RamÃ­rez Viramontes:
+/*Josue Yafte Ramírez Viramontes:
 	En este programa realizado pude darme cuenta de como es que el shell de linux hace para ejecutar los comandos que
 	normalmente utilizamos en la terminal para programar y tambien para hacer tareas basicas,
 	aunque esta forma fue por medio de fork() y de las pipes que vimos en clase fue muy interesante y bastante
@@ -242,5 +242,11 @@ funcion que quita espacios del vector
 	para que pueda hacer lo que el Shell de modo que interprete las llamadas al sistema, son aspectos interesantes
 	en la materia donde aprendi como es la importancia de el sistema operativo y de su interprete de comandos
 */
-/*Juan Pablo PÃ©rez DublÃ¡n
+/*Juan Pablo Pérez Dublán
+	Para finalizar esta practica cabe destacar que aunque a mi parecer fue un programa  complicado de realizar siento que
+	fue muy útil para ciertos ascpetos, uno de ellos fue el de poner en práctica nuestros conocimientos sobre las
+	llamadas al sistema, y el como interactucan entre ellas,pues tuvimos que usar todas las llamadas al sistema que hemos
+	visto durante el curso  por otro lado el realizar el shell me sirivo para darmecuenta de como es que linux ejecuta
+	los comandos en la terminal.
 */
+
