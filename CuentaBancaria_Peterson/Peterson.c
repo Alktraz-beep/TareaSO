@@ -74,7 +74,7 @@ void *retiro_HiloSecundario2(){
 	}
 }
 int main(){
-	// aqui va el algoritmo de crear los hios en 0 en paralelo
+	// aqui va el algoritmo de crear los hios en 0 
 	proc1deseaEntrar=0;
 	proc2deseaEntrar=0;
 	int error;
@@ -88,3 +88,20 @@ int main(){
 
 	return 0;	
 }
+/*
+	CONCLUSIONES
+	Ramírez Viramontes Josue Yafte:
+	Este programa me permitio  entender como es que la concurrencia entre procesos ya que
+	este algoritmo es eficiente permite que no haya errores al depositar y retirar
+	ya que en la vida real seria algo que no serviria mas con un sistema
+	que al fallar podria afectar al usuario, sin embargo funciona con exito y sin problemas al hacer las operaciones
+	sobre el saldo.
+
+	Pérez Dublán Juan Pablo:
+	Para finalizar esta tarea, me gustaría destacar el hecho de que se me hizo muy interesante
+	agregarle los hilos POSIX al algoritmo de peterson ya que por un lado habíamos analizado el algoritmo y por el otro ya habíamos 
+	puesto en practica el uso de hilos, entonces esto mismo nos hizo tener un analisis mas concreto.
+	Por otro lado aunque es un ejercicio un tanto simple, nos da una idea de como poner en practica en la vida o 
+	en proyectos más completos.
+
+*/
