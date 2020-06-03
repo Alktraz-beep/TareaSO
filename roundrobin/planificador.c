@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdbool.h>
+#include<stdlib.h>
 #include<math.h>
 #define MAXCHAR 1000
 /*-----------------------------variables globales----*/
@@ -23,8 +24,24 @@ void basura(int array[numProc][maxPaginas][2]);
 void eliminar(int cola[numProc],int elemento);
 void iniciarMemoria(int MI[marcosPagina][4],int TD[numProc][maxPaginas][2],int TP [numProc][3]);
 void imprimirMemoria(int array[][4]);
-/*-----------------------------funciones para algoritmo-------------------*/
-bool colavacia(int cola[numProc]);
+/*------------------------------fuciones y declaracion de cola-------------*/
+typedef struct nodo{
+	int dato;
+	struct nodo* siguiente;
+} nodo;
+
+nodo* primero = NULL;
+nodo* ultimo = NULL;
+
+void insertarNodo(int elemento);
+void mostrarCola();
+bool colaVacia();
+void eliminarNodo(int elemento);
+int cabezaCola();
+/*-----------------------------funciones del algoritmo------------------------*/
+int indexOf(int proceso,int TP[numProc][3]);
+void calcularReal(int indice,int proceso,int MI[marcosPagina][4],int TD[numProc][maxPaginas][2],int TP[numProc][3]);
+
 /*-------------------------------------------------------funcion main-----------------------------------------------------------------*/
 int main(int argc,char *argv[]){
 	//en la variable argv[1] se encuentra el nombre del archivo.txt	
@@ -95,12 +112,11 @@ int main(int argc,char *argv[]){
 			imprimirArray3D(TD,i);
 		}
 		//----------------------------------------despues de esto se crea cola------------------------------
-		int cola[numProc];
 		for(int i=0;i<numProc;i++){
-			cola[i]=TP[numProc-i-1][0];
+			insertarNodo(TP[i][0]);
 		}
 		printf("*********cola de procesos*******\n");
-		imprimirVec(cola);
+		mostrarCola();
 		//---------------------------------------se crea tabla memoria inicial------------------------------
 		int MI[marcosPagina][4];
 		iniciarMemoria(MI,TD,TP);
@@ -108,7 +124,33 @@ int main(int argc,char *argv[]){
 		imprimirMemoria(MI);
 		//-------------------------------------ya obtenido todo en tablas se empieza algoritmo-------
 		do{
-		}while(colavacia(cola));
+			//sacamos el primer proceso de la cola que es primero->dato
+			printf("\nentra proceso %d a ejecucion \n",cabezaCola());//indexOf(cabezaCola(),TP))
+			//se saca la direccion virtual y real correspondiente
+			calcularReal(indexOf(cabezaCola(),TP),cabezaCola(),MI,TD,TP);
+			imprimirMemoria(MI);
+			mostrarCola();
+			/**********************************/
+			//sacamos el primer proceso de la cola que es primero->dato
+			printf("\nentra proceso %d a ejecucion \n",cabezaCola());//indexOf(cabezaCola(),TP))
+			//se saca la direccion virtual y real correspondiente
+			calcularReal(indexOf(cabezaCola(),TP),cabezaCola(),MI,TD,TP);
+			imprimirMemoria(MI);
+			mostrarCola();
+			//sacamos el primer proceso de la cola que es primero->dato
+			printf("\nentra proceso %d a ejecucion \n",cabezaCola());//indexOf(cabezaCola(),TP))
+			//se saca la direccion virtual y real correspondiente
+			calcularReal(indexOf(cabezaCola(),TP),cabezaCola(),MI,TD,TP);
+			imprimirMemoria(MI);
+			mostrarCola();
+			//sacamos el primer proceso de la cola que es primero->dato
+			printf("\nentra proceso %d a ejecucion \n",cabezaCola());//indexOf(cabezaCola(),TP))
+			//se saca la direccion virtual y real correspondiente
+			calcularReal(indexOf(cabezaCola(),TP),cabezaCola(),MI,TD,TP);
+			imprimirMemoria(MI);
+			mostrarCola();
+			break;
+		}while(colaVacia()==false);
 		
 	}
 
@@ -313,25 +355,191 @@ void iniciarMemoria(int MI[marcosPagina][4],int TD[numProc][maxPaginas][2],int T
 			MI[i][3]=0;//la frecuencia inicial es 0
 		}
 }
-//---------------------------------------Cola vacia?-----------------------------------------------------------------------------------
-bool colavacia(int cola[numProc]){
-	int cont=0;
-	bool preg;
-	for(int i=0;i<numProc;i++)
-		if(cola[i]==-1)
-			cont++;
-	if(cont==numProc)
-		preg=false;//si esta vacia regresa false
-	else
-		preg=true;//si esta aun con elemento es true
-	return preg;
+//-------------------------------Cola vacia,insertar nodo,mostrar cola,eliminar elemento,cabeza de la cola--------------------------------
+
+void insertarNodo(int elemento){
+	nodo* nuevo = (nodo*) malloc(sizeof(nodo));
+	nuevo->dato=elemento;
+	if(primero == NULL){
+		primero = nuevo;
+		primero->siguiente = NULL;
+		ultimo = nuevo;
+	}else{
+		ultimo->siguiente = nuevo;
+		nuevo->siguiente = NULL;
+		ultimo = nuevo;
+	}
 }
 
+void mostrarCola(){
+	nodo* actual = (nodo*) malloc(sizeof(nodo));
+	actual = primero;
+	if(primero != NULL){
+		
+		while(actual != NULL){
+			printf("\n %d", actual->dato);
+			actual = actual->siguiente;
+		}
+	}else{
+		printf("\n la cola esta vacia\n");
+	}
+	printf("\n");
+}
 
+bool colaVacia(){
+	bool vacia;
+	nodo* actual = (nodo*) malloc(sizeof(nodo));
+	actual = primero;
+	if(primero != NULL){
+		vacia=false;//la cola no esta vacia
+	}else{
+		vacia=true;//la cola esta vacia
+	}
+	return vacia;
+}
+int cabezaCola(){
+	return primero->dato;
+}
 
-
-
-
+void eliminarNodo(int elemento){
+	nodo* actual = (nodo*) malloc(sizeof(nodo));
+	actual = primero;
+	nodo* anterior = (nodo*) malloc(sizeof(nodo));
+	anterior = NULL;
+	int nodoBuscado = elemento, encontrado = 0;
+	if(primero != NULL){
+		
+		while(actual != NULL && encontrado != 1){
+			
+			if(actual->dato == nodoBuscado){		
+				if(actual == primero){
+					primero = primero->siguiente;
+				}else if(actual == ultimo){
+					anterior->siguiente = NULL;
+					ultimo = anterior;
+				}else{
+					anterior->siguiente = actual->siguiente;
+				}
+				encontrado = 1;
+			}
+			anterior = actual;	
+			actual = actual->siguiente;
+		}
+		if(encontrado==0){
+			printf("\n Nodo no Encontrado\n\n");
+		}else{
+			free(anterior);
+		}
+	}else{
+		printf("\n cola vacia\n\n");
+	}
+}
+//-------------------------------------sacar indice de proceso dependiendo su ubicacion en tabla de procesos------------------------
+int indexOf(int proceso,int TP[numProc][3]){
+	int i;	
+	for(i=0;i<numProc;i++)
+		if(TP[i][0]==proceso)
+			break;// for que cuenta hasta encontrar el proceso y regresa ese indice
+	return i;
+}
+//--------------------------------------CALCULA direccion real-----------------------------------------------------------------
+void actualizarPagina(int MI[marcosPagina][4],int pagina,int proceso){
+	for(int i=0;i<marcosPagina;i++){
+		if(MI[i][1]==proceso && MI[i][2]==pagina){
+			MI[i][3]++;
+		}
+	}
+}
+void encolar(int elemento){
+	eliminarNodo(elemento);
+	insertarNodo(elemento);
+}
+//para esto primero busca en la Memoria inicial y de existir busca la pagi
+bool existeEnMemoria(int proceso, int pagina,int MI[marcosPagina][4]){
+	bool existe=false;
+	for(int i=0;i<marcosPagina;i++)
+		if(MI[i][1]==proceso && MI[i][2]==pagina)
+			existe=true;
+	return existe;
+}
+void intercambiar(int MI[marcosPagina][4],int proceso,int pagina,int frecuencia){
+		int vectorTemp[marcosPagina];
+		for(int i=0;i<marcosPagina;i++){
+			vectorTemp[i]=MI[i][3];//saca todo en un vectr
+		}
+		bubbleSort(vectorTemp,marcosPagina);//se ordena
+		int j;
+		for(j=0;j<marcosPagina;j++)
+			if(MI[j][3]==vectorTemp[0]){//si es el mas pequeño realizar intercambio
+				MI[j][1]=proceso;
+				MI[j][2]=pagina;
+				MI[j][3]=frecuencia;
+			}
+}
+void calcularReal(int indice,int proceso,int MI[marcosPagina][4],int TD[numProc][maxPaginas][2],int TP[numProc][3]){
+	//hacemos busqueda por MI
+	int pagina=0;//pagina a la que se hara el calculo
+	int contador=0;//contador que verifica si se cumplieron los  quantums
+	for(int i=0;i<marcosPagina;i++){
+		if(MI[i][1]==proceso && contador<quantum){
+			pagina=MI[i][2];
+			//ahora se hace barrido en la tabla de direcciones para sacar las direciones donde la pagina cumpla esa condicion
+			for(int j=0;j<maxPaginas;j++){
+				if(TD[indice][j][0]==pagina && TD[indice][j][0]!=-1 && contador<quantum){
+					if((TD[indice][j][1]<l || TD[indice][j][1]>=0) && pagina<TP[indice][2] && existeEnMemoria(proceso,pagina,MI)){//significa que esta bien no hay desbordamiento
+						contador++;
+						printf("direccion virtual: (%d,%d) direccion real:%d\n",pagina,TD[indice][j][1],(pagina*l+TD[indice][j][1]));
+						printf(existeEnMemoria(proceso,pagina,MI)? "true\n":"false\n");
+						printf("operacion %d mp:%d\n",contador,i);
+						actualizarPagina(MI,pagina,proceso);
+					}else if(TD[indice][j][1]>=l || TD[indice][j][1]<0){
+						printf("desbordamiento de pagina\n");//DESBORDAMIENTO
+						break;
+					}else if(pagina>=TP[indice][2]){
+						printf("inexistencia de pagina\n");//INEXISTENCIA
+						break;
+					}else if(existeEnMemoria(proceso,pagina,MI)==false){//FALLO DE PAGINA
+						printf("FALLO DE PAGINA\n");
+						//contador++;
+						//intercambiar(MI,proceso,pagina,0);
+						//printf("direccion virtual: (%d,%d) direccion real:%d\n",pagina,TD[indice][j][1],(pagina*l+TD[indice][j][1]));
+						//actualizarPagina(MI,pagina,proceso);
+						//break;
+					}
+				}else if(TD[indice][j][0]!=pagina && TD[indice][j][0]!=-1 && contador<quantum){
+					pagina=TD[indice][j][0];
+					if((TD[indice][j][1]<l || TD[indice][j][1]>=0) && pagina<TP[indice][2] && existeEnMemoria(proceso,pagina,MI)){//significa que esta bien no hay desbordamiento
+						contador++;
+						printf("direccion virtual: (%d,%d) direccion real:%d\n",pagina,TD[indice][j][1],(pagina*l+TD[indice][j][1]));
+						printf(existeEnMemoria(proceso,pagina,MI)? "true\n":"false\n");
+						printf("operacion %d mp:%d\n",contador,i);
+						actualizarPagina(MI,pagina,proceso);
+					}else if(TD[indice][j][1]>=l || TD[indice][j][1]<0){
+						printf("desbordamiento de pagina\n");//DESBORDAMIENTO
+						break;
+					}else if(pagina>=TP[indice][2]){
+						printf("inexistencia de pagina\n");//INEXISTENCIA
+						break;
+					}else if(existeEnMemoria(proceso,pagina,MI)==false){//FALLO DE PAGINA
+						printf("FALLO DE PAGINA \n");
+						//contador++;
+						//intercambiar(MI,proceso,pagina,0);
+						//printf("direccion virtual: (%d,%d) direccion real:%d\n",pagina,TD[indice][j][1],(pagina*l+TD[indice][j][1]));
+						//actualizarPagina(MI,pagina,proceso);
+					}
+				}	
+			}
+		}
+	}
+	if(contador==0){//significa que no encontro ningun marco con el proceso y las condiciones de pagina
+		//FALLO DE PAGINA
+		printf("FALLO DE PAGINA\n");
+	}else if(contador<=quantum){//significa que se cumplieron periodos menores o iguales al quantum "existe en MEMORIA"
+		//reinicia  a la cola el proceso lo manda a la cola	
+		printf("su quantum expiró\n");
+		encolar(proceso);
+	}
+}
 
 
 
