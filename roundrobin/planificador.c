@@ -1,3 +1,11 @@
+
+//Programa hecho por Josué Yafte Ramírez Viramontes y Juan Pablo Pérez Dublán
+/*objetivo: el objetivo de este programa es poner en práctica nuestros conocimientos tanto en planificación de 
+memoria como en planificación de procesos, por esto mismo tomaremos en cuenta los tres proceso básicos de la 
+planificación que es seleccionar el proceso al que se le asignaría el procesador, admitir y organizar los procesos que 
+compiten activamente y suspende de forma temporal y reanuda procesos. Por otro lado, pondremos en práctica la teoría del proceso.*/
+/*En nuestro caso para correr el programa entramos    a la ruta contenedora y se ejecuta: ./planifiador archivo.txt*/
+
 #include<stdio.h>
 #include<string.h>
 #include<stdbool.h>
@@ -38,9 +46,10 @@ void mostrarCola();
 bool colaVacia();
 void eliminarNodo(int elemento);
 int cabezaCola();
+bool buscarNodo(int nodoBuscado);
 /*-----------------------------funciones del algoritmo------------------------*/
 int indexOf(int proceso,int TP[numProc][3]);
-void calcularReal(int indice,int proceso,int MI[marcosPagina][4],int TD[numProc][maxPaginas][2],int TP[numProc][3]);
+void calcularReal(int indice,int proceso,int MI[marcosPagina][4],int TD[numProc][maxPaginas][2],int TP[numProc][3],int estado[numProc],int nodosEliminados[numProc],int paginas[numProc]);
 
 /*-------------------------------------------------------funcion main-----------------------------------------------------------------*/
 int main(int argc,char *argv[]){
@@ -68,6 +77,7 @@ int main(int argc,char *argv[]){
 		printf("numero de procesos:%d\n",numProc);
 		int TP[numProc][3];
 		int tamPags[numProc];
+		int paginas[numProc];
 		//-----------------------------se hace leida para llenar tabla nuevamente inicializa la TP(tablade procesos)
 
 		fp=fopen(argv[1],"r");//se abre para lectura
@@ -83,8 +93,11 @@ int main(int argc,char *argv[]){
 		}
 		printf("-----------\n");
 		//imprimirVec(tamPags);
+		for(int i=0;i<numProc;i++){
+			paginas[i]=tamPags[i];
+		}
 		bubbleSort(tamPags,numProc);
-		maxPaginas=tamPags[numProc-1];
+		maxPaginas=tamPags[numProc-1]+1;
 		//printf("%d",maxPaginas);
 		imprimirVec(tamPags);
 		//--------------------se declara arreglo tridimensional e inicializa en -1
@@ -108,7 +121,7 @@ int main(int argc,char *argv[]){
 		imprimirArray(TP);
 		//----------------imprime tablas de direcciones------
 		for(int i=0;i<numProc;i++){
-			printf("*********tabla de direcciones P%d*******\n",i);
+			printf("\n*********tabla de direcciones P%d*******\n",i);
 			imprimirArray3D(TD,i);
 		}
 		//----------------------------------------despues de esto se crea cola------------------------------
@@ -123,33 +136,23 @@ int main(int argc,char *argv[]){
 		printf("********Memoria Inicial*********\n");
 		imprimirMemoria(MI);
 		//-------------------------------------ya obtenido todo en tablas se empieza algoritmo-------
+		int estado[numProc];
+		for(int i=0;i<numProc;i++){
+			estado[i]=0;
+		}
+		int nodosEliminados[numProc];
+		for(int i=0;i<numProc;i++){
+			nodosEliminados[i]=0;
+		}
+		//imprimirVec(nodosEliminados);
 		do{
 			//sacamos el primer proceso de la cola que es primero->dato
-			printf("\nentra proceso %d a ejecucion \n",cabezaCola());//indexOf(cabezaCola(),TP))
+			printf("\nEntra proceso %d a ejecucion \n",cabezaCola());//indexOf(cabezaCola(),TP))
 			//se saca la direccion virtual y real correspondiente
-			calcularReal(indexOf(cabezaCola(),TP),cabezaCola(),MI,TD,TP);
+			calcularReal(indexOf(cabezaCola(),TP),cabezaCola(),MI,TD,TP,estado,nodosEliminados,paginas);
 			imprimirMemoria(MI);
+			printf("\n||||||||||||cola de procesos||||||||||\n");
 			mostrarCola();
-			/**********************************/
-			//sacamos el primer proceso de la cola que es primero->dato
-			printf("\nentra proceso %d a ejecucion \n",cabezaCola());//indexOf(cabezaCola(),TP))
-			//se saca la direccion virtual y real correspondiente
-			calcularReal(indexOf(cabezaCola(),TP),cabezaCola(),MI,TD,TP);
-			imprimirMemoria(MI);
-			mostrarCola();
-			//sacamos el primer proceso de la cola que es primero->dato
-			printf("\nentra proceso %d a ejecucion \n",cabezaCola());//indexOf(cabezaCola(),TP))
-			//se saca la direccion virtual y real correspondiente
-			calcularReal(indexOf(cabezaCola(),TP),cabezaCola(),MI,TD,TP);
-			imprimirMemoria(MI);
-			mostrarCola();
-			//sacamos el primer proceso de la cola que es primero->dato
-			printf("\nentra proceso %d a ejecucion \n",cabezaCola());//indexOf(cabezaCola(),TP))
-			//se saca la direccion virtual y real correspondiente
-			calcularReal(indexOf(cabezaCola(),TP),cabezaCola(),MI,TD,TP);
-			imprimirMemoria(MI);
-			mostrarCola();
-			break;
 		}while(colaVacia()==false);
 		
 	}
@@ -434,6 +437,29 @@ void eliminarNodo(int elemento){
 		printf("\n cola vacia\n\n");
 	}
 }
+bool buscarNodo(int nodoBuscado){
+	nodo* actual = (nodo*) malloc(sizeof(nodo));
+	actual = primero;
+	bool esta=false;
+	int encontrado = 0;
+	if(primero != NULL){
+		
+		while(actual != NULL && encontrado != 1){
+			
+			if(actual->dato == nodoBuscado){
+				esta=true;
+				encontrado = 1;
+			}
+						
+			actual = actual->siguiente;
+		}
+		if(encontrado==0){
+			esta=false;
+		}
+	}else{
+		printf("\n La cola esta vacia\n\n");
+	}
+}
 //-------------------------------------sacar indice de proceso dependiendo su ubicacion en tabla de procesos------------------------
 int indexOf(int proceso,int TP[numProc][3]){
 	int i;	
@@ -474,70 +500,90 @@ void intercambiar(int MI[marcosPagina][4],int proceso,int pagina,int frecuencia)
 				MI[j][1]=proceso;
 				MI[j][2]=pagina;
 				MI[j][3]=frecuencia;
+				break;
 			}
 }
-void calcularReal(int indice,int proceso,int MI[marcosPagina][4],int TD[numProc][maxPaginas][2],int TP[numProc][3]){
+bool nodoEliminado(int proc,int nodosEliminados[numProc]){
+	bool eliminado=false;
+	for(int i=0;i<numProc;i++)
+		if(nodosEliminados[i]==proc)
+			eliminado=true;
+	return eliminado;
+}
+void calcularReal(int indice,int proceso,int MI[marcosPagina][4],int TD[numProc][maxPaginas][2],int TP[numProc][3], int pivote[numProc], int nodosEliminados[numProc],int paginas[numProc]){
 	//hacemos busqueda por MI
 	int pagina=0;//pagina a la que se hara el calculo
 	int contador=0;//contador que verifica si se cumplieron los  quantums
+	bool aux=true;
 	for(int i=0;i<marcosPagina;i++){
 		if(MI[i][1]==proceso && contador<quantum){
-			pagina=MI[i][2];
+			pagina=pivote[indice];
+			//pagina=MI[i][2];
 			//ahora se hace barrido en la tabla de direcciones para sacar las direciones donde la pagina cumpla esa condicion
 			for(int j=0;j<maxPaginas;j++){
-				if(TD[indice][j][0]==pagina && TD[indice][j][0]!=-1 && contador<quantum){
-					if((TD[indice][j][1]<l || TD[indice][j][1]>=0) && pagina<TP[indice][2] && existeEnMemoria(proceso,pagina,MI)){//significa que esta bien no hay desbordamiento
+				if(TD[indice][j+pivote[indice]][0]==pagina && TD[indice][j+pivote[indice]][0]!=-1 && contador<quantum){
+					if((TD[indice][j+pivote[indice]][1]<l && TD[indice][j+pivote[indice]][1]>=0) && pagina<TP[indice][2] && existeEnMemoria(proceso,pagina,MI)){//significa que esta bien no hay desbordamiento
 						contador++;
-						printf("direccion virtual: (%d,%d) direccion real:%d\n",pagina,TD[indice][j][1],(pagina*l+TD[indice][j][1]));
+						printf("direccion virtual: (%d,%d) direccion real:%d \n",pagina,TD[indice][j+pivote[indice]][1],(pagina*l+TD[indice][j+pivote[indice]][1]));
 						printf(existeEnMemoria(proceso,pagina,MI)? "true\n":"false\n");
 						printf("operacion %d mp:%d\n",contador,i);
 						actualizarPagina(MI,pagina,proceso);
-					}else if(TD[indice][j][1]>=l || TD[indice][j][1]<0){
-						printf("desbordamiento de pagina\n");//DESBORDAMIENTO
-						break;
-					}else if(pagina>=TP[indice][2]){
-						printf("inexistencia de pagina\n");//INEXISTENCIA
-						break;
-					}else if(existeEnMemoria(proceso,pagina,MI)==false){//FALLO DE PAGINA
-						printf("FALLO DE PAGINA\n");
-						//contador++;
-						//intercambiar(MI,proceso,pagina,0);
-						//printf("direccion virtual: (%d,%d) direccion real:%d\n",pagina,TD[indice][j][1],(pagina*l+TD[indice][j][1]));
-						//actualizarPagina(MI,pagina,proceso);
-						//break;
-					}
-				}else if(TD[indice][j][0]!=pagina && TD[indice][j][0]!=-1 && contador<quantum){
-					pagina=TD[indice][j][0];
-					if((TD[indice][j][1]<l || TD[indice][j][1]>=0) && pagina<TP[indice][2] && existeEnMemoria(proceso,pagina,MI)){//significa que esta bien no hay desbordamiento
+					}else if((TD[indice][j+pivote[indice]][1]>=l || TD[indice][j+pivote[indice]][1]<0)){
 						contador++;
-						printf("direccion virtual: (%d,%d) direccion real:%d\n",pagina,TD[indice][j][1],(pagina*l+TD[indice][j][1]));
-						printf(existeEnMemoria(proceso,pagina,MI)? "true\n":"false\n");
-						printf("operacion %d mp:%d\n",contador,i);
-						actualizarPagina(MI,pagina,proceso);
-					}else if(TD[indice][j][1]>=l || TD[indice][j][1]<0){
-						printf("desbordamiento de pagina\n");//DESBORDAMIENTO
-						break;
+						printf("desbordamiento de pagina en (%d,%d)\n",pagina,TD[indice][j+pivote[indice]][1]);//DESBORDAMIENTO
+						encolar(proceso);
 					}else if(pagina>=TP[indice][2]){
 						printf("inexistencia de pagina\n");//INEXISTENCIA
-						break;
-					}else if(existeEnMemoria(proceso,pagina,MI)==false){//FALLO DE PAGINA
+						encolar(proceso);
+					}else if(existeEnMemoria(proceso,pagina,MI)==false && (TD[indice][j+pivote[indice]][0]!=-1 || TD[indice][j+pivote[indice]][1])){//FALLO DE PAGINA
 						printf("FALLO DE PAGINA \n");
-						//contador++;
-						//intercambiar(MI,proceso,pagina,0);
-						//printf("direccion virtual: (%d,%d) direccion real:%d\n",pagina,TD[indice][j][1],(pagina*l+TD[indice][j][1]));
-						//actualizarPagina(MI,pagina,proceso);
+						contador++;
+						intercambiar(MI,proceso,pagina,0);
+						printf("direccion virtual: (%d,%d) direccion real:%d\n",pagina,TD[indice][j+pivote[indice]][1],(pagina*l+TD[indice][j+pivote[indice]][1]));
+						actualizarPagina(MI,pagina,proceso);
 					}
-				}	
+				}else if(TD[indice][j+pivote[indice]][0]!=pagina && contador<quantum && TD[indice][j+pivote[indice]][0]!=-1 && contador<quantum){
+					pagina=TD[indice][j+pivote[indice]][0];
+					//printf("*%d %d %d*\n",indice,j+pivote[indice],TD[indice][j+pivote[indice]][1]);
+					//imprimirArray3D(TD,indice);
+					if((TD[indice][j+pivote[indice]][1]<l && TD[indice][j+pivote[indice]][1]>=0) && pagina<TP[indice][2] && existeEnMemoria(proceso,pagina,MI)){//significa que esta bien no hay desbordamiento
+						contador++;
+						printf("direccion virtual: (%d,%d) direccion real:%d 2\n",pagina,TD[indice][j+pivote[indice]][1],(pagina*l+TD[indice][j+pivote[indice]][1]));
+						printf(existeEnMemoria(proceso,pagina,MI)? "true\n":"false\n");
+						printf("operacion %d mp:%d\n",contador,i);
+						actualizarPagina(MI,pagina,proceso);
+					}else if((TD[indice][j+pivote[indice]][1]>=l || TD[indice][j+pivote[indice]][1]<0)){
+						contador++;
+						printf("desbordamiento de pagina en (%d,%d)\n",pagina,TD[indice][j+pivote[indice]][1]);//DESBORDAMIENTO
+						encolar(proceso);
+					}else if(pagina>=TP[indice][2]){
+						printf("inexistencia de pagina\n");//INEXISTENCIA
+						encolar(proceso);
+					}else if(existeEnMemoria(proceso,pagina,MI)==false && (TD[indice][j+pivote[indice]][0]!=-1 || TD[indice][j+pivote[indice]][1])){//FALLO DE PAGINA
+						printf("FALLO DE PAGINA \n");
+						contador++;
+						intercambiar(MI,proceso,pagina,0);
+						printf("direccion virtual: (%d,%d) direccion real:%d\n",pagina,TD[indice][j+pivote[indice]][1],(pagina*l+TD[indice][j+pivote[indice]][1]));
+						actualizarPagina(MI,pagina,proceso);
+					}
+				}else if((TD[indice][j+pivote[indice]][0]==-1 || TD[indice][j+pivote[indice]][1]==-1) && contador<quantum){
+					printf("proceso termino:%d\n",proceso);
+					aux=false;
+					eliminarNodo(proceso);
+					break;
+				}
+			}
+			if(aux==false){
+				break;
+			}
+			if(contador==quantum && pivote[indice]<paginas[indice]){//&& (TD[indice][j+pivote[indice]][0]!=-1)){
+					//reinicia  a la cola el proceso lo manda a la cola	
+					printf("su quantum expiró pivote:%d\n",pivote[indice]);
+					encolar(proceso);
+					pivote[indice]=pivote[indice]+contador;
+					break;
 			}
 		}
-	}
-	if(contador==0){//significa que no encontro ningun marco con el proceso y las condiciones de pagina
-		//FALLO DE PAGINA
-		printf("FALLO DE PAGINA\n");
-	}else if(contador<=quantum){//significa que se cumplieron periodos menores o iguales al quantum "existe en MEMORIA"
-		//reinicia  a la cola el proceso lo manda a la cola	
-		printf("su quantum expiró\n");
-		encolar(proceso);
 	}
 }
 
